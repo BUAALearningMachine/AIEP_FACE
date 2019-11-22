@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,13 +11,18 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
+using Color = System.Drawing.Color;
+using Image = System.Drawing.Image;
+using MessageBox = System.Windows.MessageBox;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+using Rectangle = System.Drawing.Rectangle;
 
 namespace AICourseCSharpL4
 {
@@ -86,11 +93,6 @@ namespace AICourseCSharpL4
                     m_imgPath2 = fdlg.FileName;
                 }
 
-                BitmapImage bi = new BitmapImage();
-                bi.BeginInit();
-                bi.UriSource = new Uri(m_imgPath2, UriKind.RelativeOrAbsolute);
-                bi.EndInit();
-                image_recongnition2.Source = bi;
 
                 string image = Convert.ToBase64String(File.ReadAllBytes(m_imgPath2));
 
@@ -125,6 +127,31 @@ namespace AICourseCSharpL4
                     var race = (string) face["race"]["type"];
                     var race_pb = (string) face["race"]["probability"];
                     list_faceinfo.Add("种族：" + race + ",置信度：" + race_pb);
+
+                    var left = (int)face["location"]["left"];
+                    var top = (int)face["location"]["top"];
+                    var width = (int)face["location"]["width"];
+                    var height = (int)face["location"]["height"];
+                    //var rotation = (int) face["location"]["rotation"];
+
+                    Rectangle rect = new Rectangle(left, top, width, height);
+
+                    Image change_img = Image.FromFile(m_imgPath2);
+                    Graphics plate = Graphics.FromImage(change_img);
+
+                    plate.DrawRectangle(new System.Drawing.Pen(Color.BlueViolet, 2), rect);
+                    plate.Save();
+                    plate.Dispose();
+                    MemoryStream ms = new MemoryStream();
+                    change_img.Save(ms, ImageFormat.Bmp);
+                    change_img.Dispose();
+                    BitmapImage bi = new BitmapImage();
+                    bi.BeginInit();
+                    bi.StreamSource = ms;
+                    bi.EndInit();
+                    image_recongnition2.Source = bi;
+                    image_recongnition2.InvalidateVisual();
+                    break;
                 }
 
                 textBox_recongnition2.Text = string.Join("\n", list_faceinfo);
@@ -151,11 +178,8 @@ namespace AICourseCSharpL4
                     m_imgPath1 = fdlg.FileName;
                 }
 
-                BitmapImage bi = new BitmapImage();
-                bi.BeginInit();
-                bi.UriSource = new Uri(m_imgPath1, UriKind.RelativeOrAbsolute);
-                bi.EndInit();
-                image_recongnition1.Source = bi;
+
+
                 string image = Convert.ToBase64String(File.ReadAllBytes(m_imgPath1));
 
 
@@ -190,7 +214,33 @@ namespace AICourseCSharpL4
                     var race = (string) face["race"]["type"];
                     var race_pb = (string) face["race"]["probability"];
                     list_faceinfo.Add("种族：" + race + ",置信度：" + race_pb);
+                    
+                    var left = (int) face["location"]["left"];
+                    var top = (int) face["location"]["top"];
+                    var width = (int) face["location"]["width"];
+                    var height = (int) face["location"]["height"];
+                    //var rotation = (int) face["location"]["rotation"];
+
+                    Rectangle rect = new Rectangle(left,top,width,height);
+                    
+                    Image change_img = Image.FromFile(m_imgPath1);
+                    Graphics plate = Graphics.FromImage(change_img);
+
+                    plate.DrawRectangle(new System.Drawing.Pen(Color.BlueViolet,2),rect);
+                    plate.Save();
+                    plate.Dispose();
+                    MemoryStream ms = new MemoryStream();
+                    change_img.Save(ms,ImageFormat.Bmp);
+                    change_img.Dispose();
+                    BitmapImage bi = new BitmapImage();
+                    bi.BeginInit();
+                    bi.StreamSource = ms;
+                    bi.EndInit();
+                    image_recongnition1.Source = bi;
+                    image_recongnition1.InvalidateVisual();
+                    break;
                 }
+                image_recongnition1.InvalidateVisual();
 
                 textBox_recongnition1.Text = string.Join("\n", list_faceinfo);
             }
@@ -249,5 +299,6 @@ namespace AICourseCSharpL4
         {
             return Convert.ToBase64String(File.ReadAllBytes(img));
         }
+
     }
 }
